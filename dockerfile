@@ -1,4 +1,4 @@
-FROM maven AS builder 
+FROM maven:3.8.2-ibmjava-8-alpine AS builder 
 
 RUN apk update
 RUN apk add git
@@ -11,10 +11,10 @@ WORKDIR boxfuse-sample-java-war-hello
 
 RUN mvn package
 
-FROM tomcat AS runner
+FROM tomcat:10.1-jdk17-openjdk-slim AS runner
 
 COPY --from=builder  /app/boxfuse-sample-java-war-hello/target/hello-1.0.war  /usr/local/tomcat/webapps/hello-1.0.war
 
 EXPOSE 8080
 
-CMD ["catalina.sh", "run"]
+CMD ["catalina.sh", "run"] 
