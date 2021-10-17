@@ -1,0 +1,21 @@
+FROM maven:3.8.2-ibmjava-8-alpine AS builder 
+
+RUN apk update
+RUN apk add git
+
+WORKDIR /app
+
+RUN git clone https://github.com/shephertz/App42PaaS-Java-MySQL-Sample.git
+
+WORKDIR App42PaaS-Java-MySQL-Sample
+
+RUN mvn package
+
+FROM tomcat:8.0-alpine AS runner
+
+COPY --from=builder  /app/App42PaaS-Java-MySQL-Sample/target/App42PaaS-Java-MySQL-Sample-0.0.1-SNAPSHOT.war  /usr/local/tomcat/webapps/paas.war
+COPY ./Config.properties /usr/local/tomcat/ROOT/Config.properties
+
+EXPOSE 8080
+
+CMD ["catalina.sh", "run"] 

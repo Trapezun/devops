@@ -1,0 +1,268 @@
+version: '3.7'
+services:
+  redisfront:
+    ports:
+      - 6381:6380  
+    image: "redis:6.0.4" 
+    command: redis-server --tls-port 6379 --port 6380 --tls-cert-file /certs/privatecert.crt --tls-key-file /certs/privatecert.key --tls-ca-cert-file /certs/rootCA.crt  
+    volumes:
+      - 'd:\ProjectsGit\devops\manifests\LocalProd\httpscerts:/certs/'
+      
+  redisback:
+    ports:
+      - 6382:6380  
+    image: "redis:6.0.4"
+    command: redis-server --tls-port 6379 --port 6380 --tls-cert-file /certs/privatecert.crt --tls-key-file /certs/privatecert.key --tls-ca-cert-file /certs/rootCA.crt  
+    volumes:
+      - 'd:\ProjectsGit\devops\manifests\LocalProd\httpscerts:/certs/'
+ 
+  redisprivatebu :
+    ports:
+      - 6383:6380  
+    image: "redis:6.0.4"  
+    command: redis-server --tls-port 6379 --port 6380 --tls-cert-file /certs/privatecert.crt --tls-key-file /certs/privatecert.key --tls-ca-cert-file /certs/rootCA.crt  
+    volumes:
+      - 'd:\ProjectsGit\devops\manifests\LocalProd\httpscerts:/certs/'
+
+  redisbackfront:
+    ports:
+      - 6384:6380  
+    image: "redis:6.0.4"  
+    command: redis-server --tls-port 6379 --port 6380 --tls-cert-file /certs/privatecert.crt --tls-key-file /certs/privatecert.key --tls-ca-cert-file /certs/rootCA.crt  
+    volumes:
+      - 'd:\ProjectsGit\devops\manifests\LocalProd\httpscerts:/certs/'
+        
+  database:
+    ports:
+      - 1440:1433
+    image: mcr.microsoft.com/mssql/server:2017-latest
+    environment:
+      ACCEPT_EULA: "Y"  
+      SA_PASSWORD: "Warhero2011"
+    volumes:
+      - 'd:\ProjectsGit\devops\manifests\LocalProd\database:/var/opt/mssql/data'   
+      - 'd:\ProjectsGit\devops\manifests\LocalProd\database:/var/opt/mssql/log'   
+     
+  frontoffice:
+    ports:
+      - 8031:80
+      - 8051:443
+    image: gitlab.allabout.me:4567/koenigfinance/devops/frontoffice-pf:latest
+    environment:
+      ASPNETCORE_URLS: "https://+;http://+"
+      ASPNETCORE_HTTPS_PORT: 443
+      ASPNETCORE_Kestrel__Certificates__Default__Password: "123456"
+      ASPNETCORE_Kestrel__Certificates__Default__Path: "/https/privatecert.p12"
+      ConnectionStrings__RedisFrontOffice: "redisfront:6379,allowAdmin=true,ssl=true,abortConnect=false"
+      ConnectionStrings__RedisBackFrontShared: "redisbackfront:6379,allowAdmin=true,ssl=true,abortConnect=false"
+      redis-tls-cert: "/https/privatecert.p12"
+      redis-tls-key: "123456"
+      Proxy__IEngineWraperFrontOfficeURL: "https://frontstarter/CloudLink.request" 
+      Proxy__IEngineWrapperURL: "https://supportstarter/CloudLink.request"
+      FileStorage: "backstorage"
+    volumes:
+      - 'd:\ProjectsGit\devops\manifests\LocalProd\httpscerts:/https/'
+      - 'd:\ProjectsGit\devops\manifests\LocalProd\psstorage\frontoffice:/app/backstorage/'      
+        
+  backoffice:
+    ports:
+      - 8032:80
+      - 8052:443
+    image: gitlab.allabout.me:4567/koenigfinance/devops/backoffice:latest
+    environment:
+      ASPNETCORE_URLS: "https://+;http://+"
+      ASPNETCORE_HTTPS_PORT: 443
+      ASPNETCORE_Kestrel__Certificates__Default__Password: "123456"
+      ASPNETCORE_Kestrel__Certificates__Default__Path: "/https/privatecert.p12"
+      ConnectionStrings__RedisBackOffice: "redisback:6379,allowAdmin=true,ssl=true,abortConnect=false"
+      redis-tls-cert: "/https/privatecert.p12"
+      redis-tls-key: "123456"
+      ConnectionStrings__RedisBackFrontShared: "redisbackfront:6379,allowAdmin=true,ssl=true,abortConnect=false"
+      Proxy__IEngineWraperBackOfficeURL: "https://backstarter/CloudLink.request" 
+      Proxy__IEngineWrapperURL: "https://supportstarter/CloudLink.request"
+      FileStorage: "backstorage"
+    volumes:
+      - 'd:\ProjectsGit\devops\manifests\LocalProd\httpscerts:/https/'
+      - 'd:\ProjectsGit\devops\manifests\LocalProd\psstorage\backoffice:/app/backstorage/'
+        
+  secure:
+    ports:
+      - 8033:80
+      - 8053:443
+    image: gitlab.allabout.me:4567/koenigfinance/devops/secure-pf:latest
+    environment:
+      ASPNETCORE_URLS: "https://+;http://+"
+      ASPNETCORE_HTTPS_PORT: 443
+      ASPNETCORE_Kestrel__Certificates__Default__Password: "123456"
+      ASPNETCORE_Kestrel__Certificates__Default__Path: "/https/privatecert.p12"
+      ConnectionStrings__RedisFrontOffice: "redisfront:6379,allowAdmin=true,ssl=true,abortConnect=false"
+      ConnectionStrings__RedisBackFrontShared: "redisbackfront:6379,allowAdmin=true,ssl=true,abortConnect=false"
+      redis-tls-cert: "/https/privatecert.p12"
+      redis-tls-key: "123456"
+      Proxy__IEngineWraperFrontOfficeURL: "https://frontstarter/CloudLink.request" 
+      Proxy__IEngineWrapperURL: "https://supportstarter/CloudLink.request"
+      FileStorage: "backstorage"
+    volumes:
+      - 'd:\ProjectsGit\devops\manifests\LocalProd\httpscerts:/https/'
+      - 'd:\ProjectsGit\devops\manifests\LocalProd\psstorage\secure:/app/backstorage/'
+        
+  support:
+    ports:
+      - 8034:80
+      - 8054:443
+    image: gitlab.allabout.me:4567/koenigfinance/devops/support-pf:latest
+    environment:
+      ASPNETCORE_URLS: "https://+;http://+"
+      ASPNETCORE_HTTPS_PORT: 443
+      ASPNETCORE_Kestrel__Certificates__Default__Password: "123456"
+      ASPNETCORE_Kestrel__Certificates__Default__Path: "/https/privatecert.p12"
+      ConnectionStrings__RedisFrontOffice: "redisfront:6379,allowAdmin=true,ssl=true,abortConnect=false"
+      ConnectionStrings__RedisBackFrontShared: "redisbackfront:6379,allowAdmin=true,ssl=true,abortConnect=false"
+      redis-tls-cert: "/https/privatecert.p12"
+      redis-tls-key: "123456"
+      Proxy__IEngineWraperFrontOfficeURL: "https://frontstarter/CloudLink.request" 
+      Proxy__IEngineWrapperURL: "https://supportstarter/CloudLink.request"
+      FileStorage: "backstorage"
+    volumes:
+      - 'd:\ProjectsGit\devops\manifests\LocalProd\httpscerts:/https/'
+      - 'd:\ProjectsGit\devops\manifests\LocalProd\psstorage\support:/app/backstorage/'
+
+  static:
+    ports:
+      - 8035:80
+      - 8055:443
+    image: gitlab.allabout.me:4567/koenigfinance/devops/static-probitas:latest 
+
+  gotenberg:
+    image: thecodingmachine/gotenberg:6  
+    
+  dbrollup:
+    image: gitlab.allabout.me:4567/koenigfinance/devops/dbrollup:latest  
+    environment:
+      aws-logs-region: "test"
+      aws-logs-group: "test"
+      ConnectionStrings__PaymentSystemEntities: "Server=database;Initial Catalog=kf-pf-test;Connect Timeout=200;User ID=sa;Password=Warhero2011;"
+
+  frontstarter:
+    ports:
+      - 8036:80
+      - 8056:443
+    image: gitlab.allabout.me:4567/koenigfinance/devops/frontstarter:latest
+    environment:
+      ASPNETCORE_URLS: "https://+;http://+"
+      ASPNETCORE_HTTPS_PORT: 443
+      ASPNETCORE_Kestrel__Certificates__Default__Password: "123456"
+      ASPNETCORE_Kestrel__Certificates__Default__Path: "/https/privatecert.p12"
+      ConnectionStrings__RedisPrivate: "redisprivatebu:6379,allowAdmin=true,ssl=true,abortConnect=false"
+      ConnectionStrings__RedisFrontOffice: "redisfront:6379,allowAdmin=true,ssl=true,abortConnect=false"
+      ConnectionStrings__RedisBackOffice: "redisback:6379,allowAdmin=true,ssl=true,abortConnect=false"
+      redis-tls-cert: "/https/privatecert.p12"
+      redis-tls-key: "123456"
+      ConnectionStrings__PaymentSystemEntities: "Server=database;Initial Catalog=kf-pf-test;Connect Timeout=200;User ID=sa;Password=Warhero2011;"
+      aws-logs-region: "test"
+      aws-logs-group: "test"
+    extra_hosts:
+      - "WIN-EJOLE3MBDKB:185.17.145.101"
+    volumes:
+      - 'd:\ProjectsGit\devops\manifests\LocalProd\httpscerts:/https/'
+      - 'd:\ProjectsGit\devops\manifests\LocalProd\psstorage\frontstarter\logs:/app/logs/'  
+  
+  backstarter:
+    ports:
+      - 8037:80
+      - 8057:443
+    image: gitlab.allabout.me:4567/koenigfinance/devops/backstarter:latest
+    environment:
+      ASPNETCORE_URLS: "https://+;http://+"
+      ASPNETCORE_HTTPS_PORT: 443
+      ASPNETCORE_Kestrel__Certificates__Default__Password: "123456"
+      ASPNETCORE_Kestrel__Certificates__Default__Path: "/https/privatecert.p12"
+      ConnectionStrings__RedisPrivate: "redisprivatebu:6379,allowAdmin=true,ssl=true,abortConnect=false"
+      ConnectionStrings__RedisFrontOffice: "redisfront:6379,allowAdmin=true,ssl=true,abortConnect=false"
+      ConnectionStrings__RedisBackOffice: "redisback:6379,allowAdmin=true,ssl=true,abortConnect=false"
+      redis-tls-cert: "/https/privatecert.p12"
+      redis-tls-key: "123456"
+      ConnectionStrings__PaymentSystemEntities: "Server=database;Initial Catalog=kf-pf-test;Connect Timeout=200;User ID=sa;Password=Warhero2011;"
+      aws-logs-region: "test"
+      aws-logs-group: "test"
+    extra_hosts:
+      - "WIN-EJOLE3MBDKB:185.17.145.101"     
+    volumes:
+      - 'd:\ProjectsGit\devops\manifests\LocalProd\httpscerts:/https/'
+      - 'd:\ProjectsGit\devops\manifests\LocalProd\psstorage\backstarter\logs:/app/logs/'
+
+  supportstarter:
+    ports:
+      - 8038:80
+      - 8058:443
+    image: gitlab.allabout.me:4567/koenigfinance/devops/supportstarter:latest
+    environment:
+      ASPNETCORE_URLS: "https://+;http://+"
+      ASPNETCORE_HTTPS_PORT: 443
+      ASPNETCORE_Kestrel__Certificates__Default__Password: "123456"
+      ASPNETCORE_Kestrel__Certificates__Default__Path: "/https/privatecert.p12"
+      ConnectionStrings__RedisPrivate: "redisprivatebu:6379,allowAdmin=true,ssl=true,abortConnect=false"
+      ConnectionStrings__RedisFrontOffice: "redisfront:6379,allowAdmin=true,ssl=true,abortConnect=false"
+      ConnectionStrings__RedisBackOffice: "redisback:6379,allowAdmin=true,ssl=true,abortConnect=false"
+      redis-tls-cert: "/https/privatecert.p12"
+      redis-tls-key: "123456"
+      ConnectionStrings__PaymentSystemEntities: "Server=database;Initial Catalog=kf-pf-test;Connect Timeout=200;User ID=sa;Password=Warhero2011;"
+      aws-logs-region: "test"
+      aws-logs-group: "test"
+    extra_hosts:
+      - "WIN-EJOLE3MBDKB:185.17.145.101"
+    volumes:
+      - 'd:\ProjectsGit\devops\manifests\LocalProd\httpscerts:/https/'
+      - 'd:\ProjectsGit\devops\manifests\LocalProd\psstorage\supportstarter\logs:/app/logs/'     
+      
+  openapistarter:
+    ports:
+      - 8039:80
+      - 8059:443
+    image: gitlab.allabout.me:4567/koenigfinance/devops/openapistarter:latest
+    environment:
+      ASPNETCORE_URLS: "https://+;http://+"
+      ASPNETCORE_HTTPS_PORT: 443
+      ASPNETCORE_Kestrel__Certificates__Default__Password: "123456"
+      ASPNETCORE_Kestrel__Certificates__Default__Path: "/https/privatecert.p12"
+      ConnectionStrings__RedisPrivate: "redisprivatebu:6379,allowAdmin=true,ssl=true,abortConnect=false"
+      ConnectionStrings__RedisFrontOffice: "redisfront:6379,allowAdmin=true,ssl=true,abortConnect=false"
+      ConnectionStrings__RedisBackOffice: "redisback:6379,allowAdmin=true,ssl=true,abortConnect=false"
+      redis-tls-cert: "/https/privatecert.p12"
+      redis-tls-key: "123456"
+      ConnectionStrings__PaymentSystemEntities: "Server=database;Initial Catalog=kf-pf-test;Connect Timeout=200;User ID=sa;Password=Warhero2011;"
+      aws-logs-region: "test"
+      aws-logs-group: "test"
+    extra_hosts:
+      - "WIN-EJOLE3MBDKB:185.17.145.101"
+    volumes:
+      - 'd:\ProjectsGit\devops\manifests\LocalProd\httpscerts:/https/'
+      - 'd:\ProjectsGit\devops\manifests\LocalProd\psstorage\openapistarter\logs:/app/logs/'
+
+  paysyscommonservice: 
+    ports:
+      - 8040:80
+      - 8060:443
+    image: gitlab.allabout.me:4567/koenigfinance/devops/paysyscommonservice:latest
+    environment:
+      ConnectionStrings__RedisPrivate: "redisprivatebu:6379,allowAdmin=true,ssl=true,abortConnect=false"
+      ConnectionStrings__RedisFrontOffice: "redisfront:6379,allowAdmin=true,ssl=true,abortConnect=false"
+      ConnectionStrings__RedisBackOffice: "redisback:6379,allowAdmin=true,ssl=true,abortConnect=false"
+      redis-tls-cert: "/https/privatecert.p12"
+      redis-tls-key: "123456"      
+      ConnectionStrings__PaymentSystemEntities: "Server=database;Initial Catalog=kf-pf-test;Connect Timeout=200;User ID=sa;Password=Warhero2011;"
+      aws-logs-region: "test"
+      aws-logs-group: "test"
+    extra_hosts:
+      - "WIN-EJOLE3MBDKB:185.17.145.101"
+    volumes:
+      - 'd:\ProjectsGit\devops\manifests\LocalProd\httpscerts:/https/'
+      - 'd:\ProjectsGit\devops\manifests\LocalProd\psstorage\paysyscommonservice\logs:/app/logs/'     
+  
+
+        
+
+        
+
+ 
+      
