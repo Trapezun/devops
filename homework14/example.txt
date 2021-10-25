@@ -1,0 +1,23 @@
+---
+- name: nginx
+  hosts: web
+  become: yes
+
+  tasks: 
+   - name: encuse nginx is present
+     apt:
+      name: nginx
+      state: present
+   
+   - name: encuse html is present
+     copy:
+      src: index.html
+      dest: /var/www/html
+
+   - name: encuse started
+     service:
+      name: nginx
+      state: started
+
+
+

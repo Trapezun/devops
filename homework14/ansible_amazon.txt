@@ -1,0 +1,59 @@
+---
+- name: create aws instance
+  hosts: localhost  
+  tasks: 
+    - name: create key pair
+      ec2_key:
+        name: amazon
+        region: us-east-2
+      register: ec2_key_mega_result
+    - name: save private key
+      copy: content="{{ ec2_key_mega_result.key.private_key }}" dest="~/.ssh/id_rsa" mode=600
+      when: ec2_key_mega_result.changed
+
+    - name: create security group
+      ec2_group:
+        name: builders
+        description: builders rule descriptions
+        vpc_id: vpc-1a81f771
+        region: us-east-2
+        rules:
+          - proto: tcp
+            ports:
+              - 80
+            cidr_ip: 0.0.0.0/0
+            rule_desc: allow all on port 80
+          - proto: tcp
+            ports:
+              - 22
+            cidr_ip: 93.95.137.248/32
+            rule_desc: allow ssh
+
+    - name: create aws instance
+      ec2:
+        key_name: amazon
+        region: us-east-2
+        group: builders
+        instance_type: t2.medium
+        image: ami-089fe97bc00bff7cc
+        wait: yes
+        count: 1
+        vpc_subnet_id: subnet-e96ebeb6
+        assign_public_ip: yes
+
+
+         
+
+
+
+
+
+
+      
+   
+
+
+
+
+     
+
